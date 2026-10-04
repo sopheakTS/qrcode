@@ -3,64 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>បង្កើត QR Code ស្វ័យប្រវត្តិ</title>
-    <!-- ប្រើ Tailwind CSS សម្រាប់ការរចនា (UI) -->
+    <title>កម្មវិធីបង្កើត Modern QR Code</title>
+    <!-- ទាញយក Tailwind CSS សម្រាប់តុបតែងពណ៌ និងរាងប្រអប់ -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ទាញយក Library QRCode.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- ទាញយក Library qr-code-styling សម្រាប់ធ្វើឲ្យ QR កោងស្អាត -->
+    <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
+<body class="bg-blue-50 flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-sm text-center">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">បង្កើត QR Code</h2>
+    <!-- ប្រអប់ពណ៌សកណ្តាលផ្ទាំង -->
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Modern QR Code</h2>
+        <p class="text-gray-500 mb-6 text-sm">បង្កើត QR Code រាងកោងស្អាត មិនជ្រុង</p>
         
-        <!-- ប្រអប់បញ្ចូលអត្ថបទ ឬ លីង -->
+        <!-- កន្លែងសម្រាប់បង្ហាញសារពេលភ្លេចបញ្ចូលលីង -->
+        <div id="warningMessage" class="hidden text-red-500 text-sm mb-2 font-medium">
+            សូមបញ្ចូលលីង ឬអត្ថបទជាមុនសិន!
+        </div>
+
         <input type="text" id="qrText" 
-               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" 
-               placeholder="បញ្ចូលលីង ឬ ទិន្នន័យនៅទីនេះ..." 
+               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 transition-colors mb-4 text-gray-700" 
+               placeholder="បញ្ចូលលីងនៅទីនេះ..." 
                value="https://script.google.com/macros/s/AKfycbw1N2hnFP7IeNDRHH6Q12F2z-S3RXxikxfuwxma1s4bmtNKvFzX8sVkLCOx-oejxqJC/exec">
         
-        <!-- ប៊ូតុងបង្កើត -->
-        <button onclick="generateQR()" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200 mb-6">
-            បង្កើត
+        <button onclick="generateModernQR()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-300 mb-6 shadow-md shadow-blue-200">
+            បង្កើត QR Code ថ្មី
         </button>
 
-        <!-- កន្លែងសម្រាប់បង្ហាញ QR Code -->
-        <div id="qrcode" class="flex justify-center p-4 border-2 border-dashed border-gray-200 rounded-md min-h-[200px]">
-            <!-- QR Code នឹងលោតចេញនៅទីនេះ -->
+        <!-- ផ្ទៃសម្រាប់បង្ហាញ QR Code -->
+        <div class="flex justify-center items-center p-4 border-2 border-dashed border-gray-200 bg-gray-50 rounded-xl min-h-[260px]">
+            <div id="qrcode"></div>
         </div>
+        
+        <!-- ប៊ូតុងសម្រាប់ទាញយក -->
+        <button onclick="downloadQR()" 
+                class="mt-6 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition duration-300 shadow-md shadow-green-200 flex justify-center items-center gap-2">
+            <span>ទាញយកជារូបភាព (PNG)</span>
+        </button>
     </div>
 
     <script>
-        // បង្កើតអថេរសម្រាប់ផ្ទុក QR Code Object
-        let qrcode = null;
+        // អថេរសម្រាប់ទុកទិន្នន័យ QR
+        let qrCode;
 
-        function generateQR() {
+        function generateModernQR() {
             const textValue = document.getElementById('qrText').value;
             const qrContainer = document.getElementById('qrcode');
+            const warningMsg = document.getElementById('warningMessage');
 
-            if (!textValue) {
-                alert("សូមបញ្ចូលលីង ឬទិន្នន័យជាមុនសិន!");
+            // ឆែកមើលបើអត់មានវាយអក្សរ ឲ្យលោតអក្សរពណ៌ក្រហម (ជំនួសការប្រើ alert)
+            if (!textValue.trim()) {
+                warningMsg.classList.remove('hidden');
                 return;
+            } else {
+                warningMsg.classList.add('hidden');
             }
 
-            // លុប QR Code ចាស់ចេញសិន (ប្រសិនបើមាន)
+            // លុបរូបចាស់ចេញសិនមុនគូររូបថ្មី
             qrContainer.innerHTML = "";
 
-            // បង្កើត QR Code ថ្មី
-            qrcode = new QRCode(qrContainer, {
-                text: textValue,
-                width: 200,          // ទទឹង
-                height: 200,         // កម្ពស់
-                colorDark: "#000000",  // ពណ៌កូដ
-                colorLight: "#ffffff", // ពណ៌ផ្ទៃខាងក្រោយ
-                correctLevel: QRCode.CorrectLevel.H // កម្រិតច្បាស់ (H = High អនុញ្ញាតឲ្យកូដខូចខាតខ្លះនៅតែអាចស្កេនបាន)
+            // ចាប់ផ្តើមគូរ QR Code ថ្មី
+            qrCode = new QRCodeStyling({
+                width: 240, // ទទឹង QR 
+                height: 240, // កម្ពស់ QR
+                data: textValue, // លីងដែលត្រូវបំប្លែង
+                margin: 5,
+                
+                // ១. កំណត់គ្រាប់តូចៗខាងក្នុង (Dots)
+                dotsOptions: {
+                    color: "#1f2937", // ពណ៌គ្រាប់ខាងក្នុង (ប្រផេះចាស់)
+                    type: "rounded"   // ដាក់ "rounded" ដើម្បីឲ្យវាមូល មិនជ្រុង
+                },
+                
+                // ២. កំណត់ស៊ុមភ្នែកធំៗទាំង៣ជ្រុង (Corners Square)
+                cornersSquareOptions: {
+                    color: "#2563eb", // ពណ៌ខៀវ
+                    type: "extra-rounded" // ដាក់ "extra-rounded" ដើម្បីឲ្យស៊ឹមកោងខ្លាំង
+                },
+                
+                // ៣. កំណត់គ្រាប់កណ្តាលនៃភ្នែកទាំង៣ (Corners Dot)
+                cornersDotOptions: {
+                    color: "#2563eb", // ពណ៌ខៀវ
+                    type: "dot"       // ដាក់ "dot" ឲ្យវាមូលដូចគ្រាប់សណ្តែក
+                },
+                
+                // ៤. ពណ៌ផ្ទៃខាងក្រោយ
+                backgroundOptions: {
+                    color: "#ffffff", // ពណ៌ស
+                }
             });
+
+            // បង្ហាញរូប QR ដែលគូររួច ចូលទៅក្នុងប្រអប់ HTML
+            qrCode.append(qrContainer);
         }
 
-        // បង្កើត QR Code ភ្លាមៗពេលបើក Web App ជាលើកដំបូង
-        window.onload = generateQR;
+        // អនុគមន៍សម្រាប់ពេលចុចប៊ូតុងទាញយក
+        function downloadQR() {
+            if (qrCode) {
+                qrCode.download({ name: "Dading-QR", extension: "png" });
+            }
+        }
+
+        // ពេលបើកវេបសាយភ្លាម ឲ្យវាលោតបង្កើត QR នេះអូតូយកតែម្តង
+        window.onload = function() {
+            generateModernQR();
+        };
     </script>
 </body>
 </html>
